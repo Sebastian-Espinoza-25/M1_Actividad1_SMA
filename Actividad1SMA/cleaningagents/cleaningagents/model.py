@@ -19,10 +19,13 @@ class CleanAgent(mesa.Agent):
             if isinstance(agent, DirtyAgent):
                 agent.clean()  # Clean the dirty agent
 
-        # Move to a random neighboring cell
+        # Move to a random neighboring cell that is not occupied by another CleanAgent
         possible_steps = self.model.grid.get_neighborhood(self.pos, moore=True, include_center=False)
-        new_position = self.random.choice(possible_steps)
-        self.model.grid.move_agent(self, new_position)
+        valid_steps = [pos for pos in possible_steps if all(not isinstance(a, CleanAgent) for a in self.model.grid.get_cell_list_contents([pos]))]
+        
+        if valid_steps:  # Only move if there's a valid step
+            new_position = self.random.choice(valid_steps)
+            self.model.grid.move_agent(self, new_position)
 
 
 class DirtyAgent(mesa.Agent):
@@ -61,20 +64,11 @@ class CleanModel(mesa.Model):
             self.schedule.add(dirty_agent)
             self.grid.place_agent(dirty_agent, pos)
 
-        # Create cleaning agents
+        # Place all cleaning agents in (1, 1)
         for i in range(self.num_agents):
             clean_agent = CleanAgent(self.next_id(), self)
             self.schedule.add(clean_agent)
-
-            # Find an empty position, if available
-            empty_positions = [(x, y) for x in range(width) for y in range(height) if self.grid.is_cell_empty((x, y))]
-            if empty_positions:
-                random_position = self.random.choice(empty_positions)
-                self.grid.place_agent(clean_agent, random_position)
-            else:
-                # If no empty positions, place agent at a fixed position (e.g., (0, 0))
-                print("No empty positions available; placing agent at a default position.")
-                self.grid.place_agent(clean_agent, (0, 0))
+            self.grid.place_agent(clean_agent, (1, 1))  # Start all agents in (1,1)
 
         # Data collector for dirty cells count
         self.datacollector = mesa.datacollection.DataCollector(

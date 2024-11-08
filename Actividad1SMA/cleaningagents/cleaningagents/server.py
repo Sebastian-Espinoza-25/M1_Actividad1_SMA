@@ -45,7 +45,7 @@ chart_element = mesa.visualization.ChartModule(
 )
 
 # Model parameters
-model_kwargs = {"num_agents": 10, "width": 10, "height": 10, "dirty_percentage": 1}
+model_kwargs = {"num_agents": 10, "width": 10, "height": 10, "dirty_percentage": .5}
 
 # Set up the server
 server = mesa.visualization.ModularServer(
