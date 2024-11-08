@@ -47,9 +47,11 @@ class CleanModel(mesa.Model):
     """
     Model that holds agents and manages a grid with dirty agents.
     """
-    def __init__(self, num_agents, width, height, dirty_percentage):
+    def __init__(self, num_agents, width, height, dirty_percentage, max_steps):
         super().__init__()
         self.num_agents = num_agents
+        self.max_steps = max_steps  # step limit
+        self.current_step = 0  # step counter to end simulation if reached
         self.schedule = mesa.time.RandomActivation(self)
         self.grid = mesa.space.MultiGrid(width=width, height=height, torus=False)
 
@@ -82,9 +84,10 @@ class CleanModel(mesa.Model):
         """
         A model step. Collects data and advances the schedule.
         """
+        self.current_step += 1
         self.datacollector.collect(self)
         self.schedule.step()
 
-        # Stop if no dirty agents remain
-        if not any(isinstance(agent, DirtyAgent) and agent.is_dirty for agent in self.schedule.agents):
+        # Stop if no dirty agents remain or max steps reached
+        if not any(isinstance(agent, DirtyAgent) and agent.is_dirty for agent in self.schedule.agents) or self.current_step >= self.max_steps:
             self.running = False

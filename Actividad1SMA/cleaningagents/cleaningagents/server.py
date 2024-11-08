@@ -45,7 +45,7 @@ def create_canvas_element(width, height):
     return mesa.visualization.CanvasGrid(portrayal_method, width, height, cell_width * width, cell_height * height)
 
 # Key Arguments for the start of the simulation
-model_kwargs = {"num_agents": 10, "width": 10, "height": 10, "dirty_percentage": .5}
+model_kwargs = {"num_agents": 1, "width": 10, "height": 10, "dirty_percentage": .5, "max_steps": 100}
 
 # Canvas element with dynamic adjustment
 canvas_element = create_canvas_element(model_kwargs["width"], model_kwargs["height"])
