@@ -34,20 +34,28 @@ def portrayal_method(agent):
             "h": 1,
         }
 
-# Canvas grid for visualizing agents in a 10x10 grid
-canvas_element = mesa.visualization.CanvasGrid(
-    portrayal_method, 10, 10, 500, 500
-)
+# Automatic cell adjustment based on key args
+def create_canvas_element(width, height):
+    # Size of the display on the browser
+    display_width = 500
+    display_height = 500
+    # cell calculation
+    cell_width = display_width // width
+    cell_height = display_height // height
+    return mesa.visualization.CanvasGrid(portrayal_method, width, height, cell_width * width, cell_height * height)
 
-# Chart to show remaining dirty cells over time
+# Key Arguments for the start of the simulation
+model_kwargs = {"num_agents": 10, "width": 10, "height": 10, "dirty_percentage": .5}
+
+# Canvas element with dynamic adjustment
+canvas_element = create_canvas_element(model_kwargs["width"], model_kwargs["height"])
+
+# Remaining cells graph
 chart_element = mesa.visualization.ChartModule(
     [{"Label": "Dirty Cells", "Color": "Pink"}]
 )
 
-# Model parameters
-model_kwargs = {"num_agents": 10, "width": 10, "height": 10, "dirty_percentage": .5}
-
-# Set up the server
+# setup server
 server = mesa.visualization.ModularServer(
     CleanModel,
     [canvas_element, chart_element],
@@ -55,5 +63,4 @@ server = mesa.visualization.ModularServer(
     model_kwargs,
 )
 
-# Set up port = 8521
 server.port = 8521
