@@ -7,6 +7,7 @@ class CleanAgent(mesa.Agent):
     """
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
+        self.movements = 0  # Contador de movimientos individuales
 
     def step(self):
         """
@@ -26,6 +27,7 @@ class CleanAgent(mesa.Agent):
         if valid_steps:  # Only move if there's a valid step
             new_position = self.random.choice(valid_steps)
             self.model.grid.move_agent(self, new_position)
+            self.movements += 1  # Incrementa el contador de movimientos
 
 
 class DirtyAgent(mesa.Agent):
@@ -50,10 +52,13 @@ class CleanModel(mesa.Model):
     def __init__(self, num_agents, width, height, dirty_percentage, max_steps):
         super().__init__()
         self.num_agents = num_agents
-        self.max_steps = max_steps  # step limit
-        self.current_step = 0  # step counter to end simulation if reached
+        self.max_steps = max_steps
+        self.current_step = 0
+        self.total_movements = 0  # Total movements from ALL agents
         self.schedule = mesa.time.RandomActivation(self)
         self.grid = mesa.space.MultiGrid(width=width, height=height, torus=False)
+        self.clean_time = None  # Time (steps to clean)
+        self.final_clean_percentage = 0  # Clean cells at the end
 
         # Create dirty agents based on the dirty_percentage
         total_cells = width * height
@@ -72,9 +77,12 @@ class CleanModel(mesa.Model):
             self.schedule.add(clean_agent)
             self.grid.place_agent(clean_agent, (1, 1))  # Start all agents in (1,1)
 
-        # Data collector for dirty cells count
+        # Data collector for dirty cells count and total movements
         self.datacollector = mesa.datacollection.DataCollector(
-            {"Dirty Cells": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, DirtyAgent) and agent.is_dirty)}
+            {
+                "Dirty Cells": lambda m: sum(1 for agent in m.schedule.agents if isinstance(agent, DirtyAgent) and agent.is_dirty),
+                "Total Movements": lambda m: sum(agent.movements for agent in m.schedule.agents if isinstance(agent, CleanAgent))
+            }
         )
 
         self.running = True
@@ -88,6 +96,19 @@ class CleanModel(mesa.Model):
         self.datacollector.collect(self)
         self.schedule.step()
 
+        # Check if all cells are clean
+        dirty_cells_remaining = any(isinstance(agent, DirtyAgent) and agent.is_dirty for agent in self.schedule.agents)
+        
+        if not dirty_cells_remaining and self.clean_time is None:
+            self.clean_time = self.current_step  # Current step at the end to measure time
+
         # Stop if no dirty agents remain or max steps reached
-        if not any(isinstance(agent, DirtyAgent) and agent.is_dirty for agent in self.schedule.agents) or self.current_step >= self.max_steps:
+        if not dirty_cells_remaining or self.current_step >= self.max_steps:
             self.running = False
+            # Clean cell percentage operations
+            total_dirty_cells = sum(1 for agent in self.schedule.agents if isinstance(agent, DirtyAgent))
+            cleaned_cells = sum(1 for agent in self.schedule.agents if isinstance(agent, DirtyAgent) and not agent.is_dirty)
+            self.final_clean_percentage = (cleaned_cells / total_dirty_cells) * 100 if total_dirty_cells > 0 else 100
+
+            # All movements
+            self.total_movements = sum(agent.movements for agent in self.schedule.agents if isinstance(agent, CleanAgent))
