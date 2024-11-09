@@ -1,3 +1,14 @@
+#----------------------------------------------------------
+# M1 Actividad
+#
+# 8-Nov-2024
+# Autores:
+#           Sebastian Espinoza Farías A01750311
+#           Jesús Guzmán Ortega A01799257
+# This file is the definition of the server to display the simulation for the 
+# cleaning agents. It helps display the model.py file which contains the model and the agents behavior
+#----------------------------------------------------------
+
 """
 Configure visualization elements and instantiate a server
 """
@@ -7,23 +18,24 @@ import mesa
 from mesa.visualization.modules import TextElement
 
 
-class modelData(TextElement):
+class ModelData(TextElement):
     """
     Display custom data from the model.
     """
     def render(self, model):
-        # show results at the end of the simulation
+        # Show results at the end of the simulation
         if not model.running:  # The results only show when the simulation reaches end by cleaning or max steps
-            clean_time = model.clean_time if model.clean_time is not None else model.current_step
-            clean_percentage = model.final_clean_percentage
-            total_movements = model.total_movements
-            return f"Tiempo necesario para limpiar ó fin de ejecución: {clean_time} pasos<br>" \
-                   f"Porcentaje de celdas limpias: {clean_percentage:.2f}%<br>" \
-                   f"Total de movimientos de agentes: {total_movements}"
+            cleanTime = model.cleanTime if model.cleanTime is not None else model.currentStep
+            cleanPercentage = model.finalCleanPercentage
+            totalMovements = model.totalMovements
+            return f"Tiempo necesario para limpiar o fin de ejecución: {cleanTime} pasos<br>" \
+                   f"Porcentaje de celdas limpias: {cleanPercentage:.2f}%<br>" \
+                   f"Total de movimientos de agentes: {totalMovements}"
         else:
             return "Simulación en ejecución..."
 
-def portrayal_method(agent):
+
+def portrayalMethod(agent):
     """
     Define the visual representation for cleaning and dirty agents.
     """
@@ -42,7 +54,7 @@ def portrayal_method(agent):
     
     # Representation for DirtyAgent (green if dirty, white if clean)
     if isinstance(agent, DirtyAgent):
-        color = "green" if agent.is_dirty else "white"
+        color = "green" if agent.isDirty else "white"
         return {
             "Shape": "rect",
             "Filled": "true",
@@ -52,36 +64,38 @@ def portrayal_method(agent):
             "h": 1,
         }
 
-# Automatic cell adjustment based on key args
-def create_canvas_element(width, height):
-    # Size of the display on the browser
-    display_width = 500
-    display_height = 500
-    # cell calculation
-    cell_width = display_width // width
-    cell_height = display_height // height
-    return mesa.visualization.CanvasGrid(portrayal_method, width, height, cell_width * width, cell_height * height)
+
+def createCanvasElement(width, height):
+    """
+    Automatic cell adjustment based on key args.
+    """
+    displayWidth = 500
+    displayHeight = 500
+    cellWidth = displayWidth // width
+    cellHeight = displayHeight // height
+    return mesa.visualization.CanvasGrid(portrayalMethod, width, height, cellWidth * width, cellHeight * height)
+
 
 # Text for the data collected
-custom_text_element = modelData()
+customTextElement = ModelData()
 
 # Key Arguments for the start of the simulation
-model_kwargs = {"num_agents": 40, "width": 40, "height": 40, "dirty_percentage": .8, "max_steps": 100}
+modelKwargs = {"numAgents": 10, "width": 10, "height": 10, "dirtyPercentage": 0.8, "maxSteps": 100}
 
 # Canvas element with dynamic adjustment
-canvas_element = create_canvas_element(model_kwargs["width"], model_kwargs["height"])
+canvasElement = createCanvasElement(modelKwargs["width"], modelKwargs["height"])
 
 # Remaining cells graph
-chart_element = mesa.visualization.ChartModule(
+chartElement = mesa.visualization.ChartModule(
     [{"Label": "Dirty Cells", "Color": "Pink"}]
 )
 
-# setup server
+# Setup server
 server = mesa.visualization.ModularServer(
     CleanModel,
-    [canvas_element, chart_element, custom_text_element],
+    [canvasElement, chartElement, customTextElement],
     "Cleaning Agents Simulation",
-    model_kwargs,
+    modelKwargs,
 )
 
 server.port = 8521
