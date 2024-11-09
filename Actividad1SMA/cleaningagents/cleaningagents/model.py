@@ -5,6 +5,8 @@
 # Autores:
 #           Sebastian Espinoza Farías A01750311
 #           Jesús Guzmán Ortega A01799257
+# This file defines the agent model as well as the two agents used ofr the simulation
+# It includes the CleanAgent and the DirtyAgent and their behavior inside the model
 #----------------------------------------------------------
 import mesa
 import random
